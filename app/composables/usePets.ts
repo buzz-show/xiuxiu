@@ -3,12 +3,19 @@ import type { Pet, NewPet } from '~/types/pet'
 export function usePets() {
   const pets = ref<Pet[]>([])
   const loading = ref(false)
+  const error = ref<string | null>(null)
 
   async function fetchPets() {
     loading.value = true
-    const data = await $fetch<Pet[]>('/api/pets')
-    pets.value = data ?? []
-    loading.value = false
+    error.value = null
+    try {
+      const data = await $fetch<Pet[]>('/api/pets')
+      pets.value = data ?? []
+    } catch (e: any) {
+      error.value = e?.data?.message ?? '获取宠物列表失败'
+    } finally {
+      loading.value = false
+    }
   }
 
   async function getPet(id: string) {
@@ -16,17 +23,29 @@ export function usePets() {
   }
 
   async function createPet(payload: NewPet) {
-    const pet = await $fetch<Pet>('/api/pets', { method: 'POST', body: payload })
-    pets.value.unshift(pet)
-    return pet
+    error.value = null
+    try {
+      const pet = await $fetch<Pet>('/api/pets', { method: 'POST', body: payload })
+      pets.value.unshift(pet)
+      return pet
+    } catch (e: any) {
+      error.value = e?.data?.message ?? '创建宠物失败'
+      throw e
+    }
   }
 
   async function updatePet(id: string, payload: Partial<Pet>) {
-    const updated = await $fetch<Pet>(`/api/pets/${id}`, { method: 'PUT', body: payload })
-    const idx = pets.value.findIndex(p => p.id === id)
-    if (idx !== -1) pets.value[idx] = updated
-    return updated
+    error.value = null
+    try {
+      const updated = await $fetch<Pet>(`/api/pets/${id}`, { method: 'PUT', body: payload })
+      const idx = pets.value.findIndex(p => p.id === id)
+      if (idx !== -1) pets.value[idx] = updated
+      return updated
+    } catch (e: any) {
+      error.value = e?.data?.message ?? '更新宠物信息失败'
+      throw e
+    }
   }
 
-  return { pets, loading, fetchPets, getPet, createPet, updatePet }
+  return { pets, loading, error, fetchPets, getPet, createPet, updatePet }
 }

@@ -6,6 +6,8 @@ export default defineNuxtConfig({
   // SPA 模式，兼容 Capacitor WebView
   ssr: false,
 
+  css: ['~/assets/css/main.css'],
+
   modules: [
     '@nuxt/ui',
     '@nuxtjs/supabase',
@@ -22,7 +24,8 @@ export default defineNuxtConfig({
     openaiApiKey: process.env.OPENAI_API_KEY ?? '',
     supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY ?? '',
     public: {
-      appName: '秀秀宠物助理',
+      appName: '嗅嗅宠物助理',
+      forceMobile: false, // 由 .env 中的 NUXT_PUBLIC_FORCE_MOBILE 覆盖
     },
   },
 })

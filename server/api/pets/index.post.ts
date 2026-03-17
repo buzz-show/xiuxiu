@@ -1,3 +1,4 @@
+import { serverSupabaseUser } from '#supabase/server'
 import type { NewPet } from '~/types/pet'
 
 export default defineEventHandler(async (event) => {

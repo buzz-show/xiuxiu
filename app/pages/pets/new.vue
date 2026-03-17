@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { createPet } = usePets()
+const { createPet, error } = usePets()
 const router = useRouter()
 const saving = ref(false)
 const form = reactive({ name: '', species: 'cat', breed: '', birthday: '', gender: 'unknown', notes: '' })
@@ -9,6 +9,8 @@ async function onSubmit() {
   try {
     await createPet(form)
     router.push('/')
+  } catch {
+    // error 已由 usePets 内部写入 error ref，模板中展示
   } finally {
     saving.value = false
   }
@@ -21,6 +23,7 @@ async function onSubmit() {
       <UButton icon="i-heroicons-arrow-left" variant="ghost" @click="$router.back()" />
       <h1 class="text-xl font-bold">添加宠物</h1>
     </div>
+    <UAlert v-if="error" color="red" variant="soft" :description="error" class="mb-4" />
     <UForm :state="form" class="space-y-4" @submit="onSubmit">
       <UFormField label="宠物名字" name="name" required>
         <UInput v-model="form.name" placeholder="例如：小橘" />
