@@ -14,6 +14,14 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
   ],
 
+  // @nuxt/ui 会自动安装 @nuxt/fonts；这里显式禁用需要联网的 Google providers
+  fonts: {
+    providers: {
+      google: false,
+      googleicons: false,
+    },
+  },
+
   // Supabase 模块配置
   supabase: {
     redirect: false,

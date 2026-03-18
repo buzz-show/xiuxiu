@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col h-screen bg-gray-50">
-    <main class="flex-1 overflow-y-auto"><slot /></main>
+  <div class="flex flex-col h-screen" style="background-color: var(--warm-bg)">
+    <main class="flex-1 overflow-y-auto pb-28 safe-top"><slot /></main>
     <UiBottomTabBar />
   </div>
 </template>
