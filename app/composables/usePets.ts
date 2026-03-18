@@ -12,6 +12,7 @@ export function usePets() {
       const data = await $fetch<Pet[]>('/api/pets')
       pets.value = data ?? []
     } catch (e: any) {
+      if (e?.statusCode === 401) return navigateTo('/auth/login')
       error.value = e?.data?.message ?? '获取宠物列表失败'
     } finally {
       loading.value = false
@@ -29,6 +30,7 @@ export function usePets() {
       pets.value.unshift(pet)
       return pet
     } catch (e: any) {
+      if (e?.statusCode === 401) return navigateTo('/auth/login')
       error.value = e?.data?.message ?? '创建宠物失败'
       throw e
     }
@@ -42,6 +44,7 @@ export function usePets() {
       if (idx !== -1) pets.value[idx] = updated
       return updated
     } catch (e: any) {
+      if (e?.statusCode === 401) return navigateTo('/auth/login')
       error.value = e?.data?.message ?? '更新宠物信息失败'
       throw e
     }

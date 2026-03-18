@@ -16,13 +16,17 @@ async function pickPhoto() {
 </script>
 <template>
   <div class="flex flex-col items-center gap-2">
-    <button class="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center text-4xl overflow-hidden relative group" @click="pickPhoto">
+    <button
+      class="w-24 h-24 rounded-full flex items-center justify-center text-4xl overflow-hidden relative group"
+      style="background-color: var(--warm-primary)"
+      @click="pickPhoto"
+    >
       <img v-if="pet?.avatar_url" :src="pet.avatar_url" class="w-full h-full object-cover" />
       <span v-else>{{ pet?.species === "cat" ? "🐱" : "🐶" }}</span>
       <div class="absolute inset-0 bg-black/30 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
         <UIcon name="i-heroicons-camera" class="text-white text-2xl" />
       </div>
     </button>
-    <p class="text-xs text-gray-400">点击更换头像</p>
+    <p class="text-xs text-[#A1A1AA]">点击更换头像</p>
   </div>
 </template>

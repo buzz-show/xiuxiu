@@ -8,8 +8,9 @@ const isUser = computed(() => props.message.role === 'user')
     <div
       class="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm"
       :class="isUser
-        ? 'bg-primary-500 text-white rounded-br-sm'
-        : 'bg-white text-gray-800 shadow-sm rounded-bl-sm'"
+        ? 'text-white rounded-br-sm'
+        : 'bg-white text-[#3F3F46] shadow-sm rounded-bl-sm'"
+      :style="isUser ? 'background-color: var(--warm-deep)' : ''"
     >
       <p class="whitespace-pre-wrap">{{ message.content }}</p>
     </div>

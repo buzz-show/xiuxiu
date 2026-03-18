@@ -1,4 +1,6 @@
 <script setup lang="ts">
+definePageMeta({ layout: false })
+
 // @nuxtjs/supabase 自动处理 token，跳转到首页即可
 const router = useRouter()
 onMounted(() => router.push('/'))

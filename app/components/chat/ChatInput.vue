@@ -6,20 +6,20 @@ function onKeydown(e: KeyboardEvent) {
 }
 </script>
 <template>
-  <div class="border-t bg-white px-3 py-2 flex gap-2 items-end">
+  <div class="border-t border-[#E4E4E7] bg-white px-3 py-2 flex gap-2 items-end">
     <UTextarea
       :value="props.modelValue"
       rows="1"
       autoresize
       placeholder="问问宠物健康相关的问题..."
       class="flex-1 resize-none"
-      @input="emit("update:modelValue", ($event.target as HTMLTextAreaElement).value)"
+      @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
       @keydown="onKeydown"
     />
     <UButton
       icon="i-heroicons-paper-airplane"
       :loading="props.loading"
-      @click="emit("send")"
+      @click="emit('send')"
     />
   </div>
 </template>

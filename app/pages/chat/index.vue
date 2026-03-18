@@ -11,10 +11,10 @@ async function onSend() {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen">
-    <header class="px-4 py-3 bg-white border-b flex items-center gap-2">
+  <div class="flex flex-col h-screen" style="background-color: var(--warm-bg)">
+    <header class="px-4 py-3 bg-white border-b border-[#E4E4E7] flex items-center gap-2">
       <span class="text-xl">🐾</span>
-      <h1 class="font-semibold">AI 宠物助理</h1>
+      <h1 class="font-semibold text-[#18181B]">AI 宠物助理</h1>
     </header>
     <ChatMessageList :messages="messages" class="flex-1 overflow-y-auto" />
     <ChatChatInput v-model="input" :loading="sending" @send="onSend" />

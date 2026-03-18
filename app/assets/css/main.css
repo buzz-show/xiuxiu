@@ -1,11 +1,26 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+/* 自定义 sand 暖米色调色板，供 Nuxt UI primary 使用 */
+@theme {
+  --color-sand-50:  #FFFCF8;
+  --color-sand-100: #F5EFE6;
+  --color-sand-200: #EADBC8;
+  --color-sand-300: #DDD0BB;
+  --color-sand-400: #D0C0AD;
+  --color-sand-500: #C9B7A3;
+  --color-sand-600: #B5A08C;
+  --color-sand-700: #96836F;
+  --color-sand-800: #72624F;
+  --color-sand-900: #4A3F34;
+  --color-sand-950: #26201A;
+}
+
 :root {
-  --warm-bg: #FFFCF8;
-  --warm-light: #F5EFE6;
+  --warm-bg:      #FFFCF8;
+  --warm-light:   #F5EFE6;
   --warm-primary: #EADBC8;
-  --warm-deep: #C9B7A3;
+  --warm-deep:    #C9B7A3;
 }
 
 .safe-top {
