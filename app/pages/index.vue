@@ -78,7 +78,13 @@ const groomings = ref([
 
     <!-- ===== 空状态 ===== -->
     <div v-if="!loading && !pets.length" class="flex flex-col items-center justify-center py-24 space-y-4">
-      <p class="text-6xl">🐾</p>
+      <div class="w-24 h-24 rounded-full mx-auto mb-6 transition-transform hover:scale-110 duration-500">
+        <img 
+          src="/images/dog-nose-logo.png" 
+          alt="嗅嗅 Logo" 
+          class="w-full h-full object-contain animate-[bounce_4s_infinite] mix-blend-multiply"
+        >
+      </div>
       <p class="text-[#18181B] font-semibold text-lg">还没有宠物档案</p>
       <p class="text-sm text-[#71717A] text-center">快来添加你的第一只宝贝吧！</p>
       <NuxtLink
