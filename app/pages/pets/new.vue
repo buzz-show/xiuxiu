@@ -53,8 +53,10 @@ const handleSave = () => {
   console.log('Saving pet profile:', petForm)
 }
 
+const router = useRouter()
+
 const handleCancel = () => {
-  console.log('Cancelled')
+  router.back()
 }
 </script>
 
