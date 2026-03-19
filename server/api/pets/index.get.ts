@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const { data, error } = await supabase
     .from('pets')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', user.sub)
     .order('created_at', { ascending: false })
 
   if (error) throw createError({ statusCode: 500, message: error.message })

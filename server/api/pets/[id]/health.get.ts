@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
 
   // 验证宠物归属
   const { data: pet } = await supabase
-    .from('pets').select('id').eq('id', petId).eq('user_id', user.id).single()
+    .from('pets').select('id').eq('id', petId).eq('user_id', user.sub).single()
   if (!pet) throw createError({ statusCode: 404, message: 'Pet not found' })
 
   const { data, error } = await supabase

@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     .from('pets')
     .select('*')
     .eq('id', id)
-    .eq('user_id', user.id)
+    .eq('user_id', user.sub)
     .single()
 
   if (error || !data) throw createError({ statusCode: 404, message: 'Pet not found' })

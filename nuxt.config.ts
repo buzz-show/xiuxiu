@@ -30,9 +30,9 @@ export default defineNuxtConfig({
   // 仅服务端可见的 Key，防止 API Key 泄露到前端
   runtimeConfig: {
     openaiApiKey: process.env.OPENAI_API_KEY ?? '',
-    supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY ?? '',
+    supabaseServiceKey: process.env.SUPABASE_SECRET_KEY ?? '',
     public: {
-      appName: '嗅嗅宠物助理',
+      appName: '嗅嗅宠物管家',
       forceMobile: false, // 由 .env 中的 NUXT_PUBLIC_FORCE_MOBILE 覆盖
     },
   },

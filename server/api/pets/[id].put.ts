@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     .from('pets')
     .update({ name, species, breed, birthday, gender, avatar_url, notes, updated_at: new Date().toISOString() })
     .eq('id', id)
-    .eq('user_id', user.id)
+    .eq('user_id', user.sub)
     .select()
     .single()
 

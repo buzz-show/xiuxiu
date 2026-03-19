@@ -19,13 +19,13 @@ export default defineEventHandler(async (event) => {
   setSSEHeaders(event)
 
   // 4. 构建 Agent 并流式调用
-  const graph = buildPetAssistantGraph(user.id)
+  const graph = buildPetAssistantGraph(user.sub)
   const config = { configurable: { thread_id: body.thread_id } }
 
   const stream = await graph.stream(
     {
       messages: [new HumanMessage(body.message)],
-      userId: user.id,
+      userId: user.sub,
       petId: body.pet_id,
     },
     { ...config, streamMode: 'messages' },
