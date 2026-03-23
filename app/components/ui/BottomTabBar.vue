@@ -1,7 +1,8 @@
 <script setup lang="ts">
 const tabs = [
   { label: '首页', icon: 'i-heroicons-home', to: '/' },
-  { label: 'AI 助理', icon: 'i-heroicons-chat-bubble-left-right', to: '/chat' },
+  { label: '发现', icon: 'i-heroicons-map-pin', to: '/discover' },
+  { label: '物品', icon: 'i-heroicons-archive-box', to: '/goods' },
   { label: '我的', icon: 'i-heroicons-user', to: '/profile' },
 ]
 const route = useRoute()

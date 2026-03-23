@@ -120,6 +120,108 @@ export const addHealthRecordTool = (userId: string) =>
     },
   )
 
+
+/**
+ * Tool: 查询即将到期/已过期的提醒
+ */
+export const getUpcomingRemindersTool = (userId: string) =>
+  tool(
+    async ({ days_ahead }) => {
+      const supabase = createServerSupabaseClient()
+
+      // 获取用户所有宠物
+      const { data: pets } = await supabase
+        .from('pets')
+        .select('id, name')
+        .eq('user_id', userId)
+
+      if (!pets?.length) return '用户暂无宠物档案。'
+
+      const petIds = pets.map(p => p.id)
+      const today = new Date()
+      const futureDate = new Date()
+      futureDate.setDate(today.getDate() + (days_ahead ?? 30))
+
+      const { data, error } = await supabase
+        .from('health_records')
+        .select('pet_id, type, title, next_due_date')
+        .in('pet_id', petIds)
+        .not('next_due_date', 'is', null)
+        .lte('next_due_date', futureDate.toISOString().split('T')[0])
+        .order('next_due_date', { ascending: true })
+
+      if (error) return `查询提醒失败：${error.message}`
+      if (!data?.length) return `未来 ${days_ahead ?? 30} 天内没有待办提醒。`
+
+      const petMap = Object.fromEntries(pets.map(p => [p.id, p.name]))
+      const todayStr = today.toISOString().split('T')[0]
+
+      return JSON.stringify(data.map(r => ({
+        pet: petMap[r.pet_id] ?? r.pet_id,
+        type: r.type,
+        title: r.title,
+        due: r.next_due_date,
+        overdue: r.next_due_date! < todayStr,
+      })))
+    },
+    {
+      name: 'get_upcoming_reminders',
+      description: '查询用户宠物即将到期或已过期的健康提醒（疫苗、驱虫、体检等）。当用户询问"最近有什么要做的"、"有什么提醒"时调用。',
+      schema: z.object({
+        days_ahead: z.number().optional().describe('查询未来多少天内的提醒，默认 30 天'),
+      }),
+    },
+  )
+
+/**
+ * Tool: 获取宠物饮食建议
+ */
+export const getDietaryAdviceTool = (userId: string) =>
+  tool(
+    async ({ pet_id, concern }) => {
+      const supabase = createServerSupabaseClient()
+
+      const { data: pet } = await supabase
+        .from('pets')
+        .select('name, species, breed, birthday, gender, weight, sterilized')
+        .eq('id', pet_id)
+        .eq('user_id', userId)
+        .single()
+
+      if (!pet) return '无权访问该宠物信息。'
+
+      // 计算年龄
+      let ageDesc = '未知年龄'
+      if (pet.birthday) {
+        const birth = new Date(pet.birthday)
+        const now = new Date()
+        const months = (now.getFullYear() - birth.getFullYear()) * 12 + (now.getMonth() - birth.getMonth())
+        if (months < 12) ageDesc = `${months} 个月`
+        else ageDesc = `${Math.floor(months / 12)} 岁`
+      }
+
+      const profile = `宠物信息：
+- 名字：${pet.name}
+- 种类：${pet.species === 'cat' ? '猫' : pet.species === 'dog' ? '狗' : '其他'}
+- 品种：${pet.breed ?? '未知'}
+- 年龄：${ageDesc}
+- 性别：${pet.gender === 'male' ? '公' : pet.gender === 'female' ? '母' : '未知'}
+- 体重：${pet.weight ? pet.weight + ' kg' : '未知'}
+- 是否绝育：${pet.sterilized ? '是' : '否'}
+- 具体关注：${concern ?? '日常饮食建议'}`
+
+      return profile
+    },
+    {
+      name: 'get_dietary_advice_context',
+      description: '获取宠物基本信息用于生成个性化饮食建议。当用户询问宠物吃什么、喂食量、食物禁忌等饮食相关问题时调用。',
+      schema: z.object({
+        pet_id: z.string().describe('宠物 ID'),
+        concern: z.string().optional().describe('具体的饮食关注点，如"减肥"、"毛发护理"'),
+      }),
+    },
+  )
+
 /**
  * 根据 userId 创建所有 Tools 集合
  */
@@ -128,5 +230,7 @@ export function createAgentTools(userId: string) {
     getPetProfilesTool(userId),
     getHealthRecordsTool(userId),
     addHealthRecordTool(userId),
+    getUpcomingRemindersTool(userId),
+    getDietaryAdviceTool(userId),
   ]
 }

@@ -50,8 +50,6 @@ const greeting = computed(() => {
   else              greet = '晚上好'
 
   const username = authStore?.user?.email?.split('@')[0]
-  console.log('greeting computed:', authStore)
-  console.log('greeting computed1:', username)
   return username ? `${greet}，${username}` : greet
 })
 
@@ -69,27 +67,50 @@ function speciesEmoji(species?: string) {
   return '🐾'
 }
 
-// Mock 今日状态（后续按 selectedPet.id 拉取真实数据）
-const statusCards = computed(() => [
-  { icon: '⚖️', label: '体重', value: '--', unit: 'kg' },
-  { icon: '🩺', label: '最近体检', value: '--', unit: '' },
-  { icon: '💉', label: '疫苗状态', value: '正常', unit: '' },
-  { icon: '🐛', label: '驱虫状态', value: '正常', unit: '' },
-])
+// 健康记录（真实数据）
+const {
+  fetchHealthRecords,
+  reminders,
+  groomingSummary,
+  vaccineStatus,
+  dewormingStatus,
+} = useHealthRecords()
 
-// Mock 提醒数据
-const reminders = ref([
-  { id: 1, icon: '💉', title: '狂犬病疫苗复打', time: '3 天后', status: 'warning' },
-  { id: 2, icon: '🐛', title: '体内驱虫', time: '已过期 2 天', status: 'error' },
-  { id: 3, icon: '🛁', title: '下次洗澡', time: '7 天后', status: 'normal' },
-])
+// 切换宠物时重新拉取健康记录
+watch(selectedPet, (pet) => {
+  if (pet?.id) fetchHealthRecords(pet.id)
+}, { immediate: true })
 
-// Mock 洗护记录
-const groomings = ref([
-  { label: '上次洗澡', date: '2026-03-10' },
-  { label: '上次美容', date: '2026-03-01' },
-  { label: '上次剪甲', date: '2026-03-05' },
-])
+// 今日状态（接入真实数据）
+const statusCards = computed(() => {
+  const lastCheckup = reminders.value.find(r => r.icon === '🏥')
+  return [
+    {
+      icon: '⚖️',
+      label: '体重',
+      value: selectedPet.value?.weight != null ? String(selectedPet.value.weight) : '--',
+      unit: 'kg',
+    },
+    {
+      icon: '🩺',
+      label: '最近体检',
+      value: lastCheckup ? lastCheckup.time : (groomingSummary.value.find(g => g.label === '上次体检')?.date ?? '--'),
+      unit: '',
+    },
+    {
+      icon: '💉',
+      label: '疫苗状态',
+      value: vaccineStatus.value.text,
+      unit: '',
+    },
+    {
+      icon: '🐛',
+      label: '驱虫状态',
+      value: dewormingStatus.value.text,
+      unit: '',
+    },
+  ]
+})
 </script>
 
 <template>
@@ -271,8 +292,22 @@ const groomings = ref([
 
       <!-- ── 提醒模块 ── -->
       <div>
-        <p class="text-sm font-semibold text-[#18181B] mb-3">提醒事项</p>
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-sm font-semibold text-[#18181B]">提醒事项</p>
+          <NuxtLink
+            :to="selectedPet ? `/pets/${selectedPet.id}` : '/pets/new'"
+            class="text-xs font-medium px-3 py-1 rounded-full"
+            style="background-color: var(--warm-light); color: var(--warm-deep)"
+          >
+            + 添加记录
+          </NuxtLink>
+        </div>
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <!-- 空状态 -->
+          <div v-if="!reminders.length" class="flex flex-col items-center gap-2 py-8">
+            <span class="text-3xl">✅</span>
+            <p class="text-sm text-[#A1A1AA]">暂无待办提醒</p>
+          </div>
           <div
             v-for="(item, idx) in reminders"
             :key="item.id"
@@ -302,16 +337,30 @@ const groomings = ref([
 
       <!-- ── 最近洗护 ── -->
       <div>
-        <p class="text-sm font-semibold text-[#18181B] mb-3">最近洗护</p>
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-sm font-semibold text-[#18181B]">最近洗护</p>
+          <NuxtLink
+            :to="selectedPet ? `/pets/${selectedPet.id}` : '/pets/new'"
+            class="text-xs font-medium px-3 py-1 rounded-full"
+            style="background-color: var(--warm-light); color: var(--warm-deep)"
+          >
+            查看全部
+          </NuxtLink>
+        </div>
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div
-            v-for="(g, idx) in groomings"
+            v-for="(g, idx) in groomingSummary"
             :key="g.label"
             class="flex items-center justify-between px-4 py-3"
-            :class="idx < groomings.length - 1 ? 'border-b border-[#E4E4E7]' : ''"
+            :class="idx < groomingSummary.length - 1 ? 'border-b border-[#E4E4E7]' : ''"
           >
-            <span class="text-sm text-[#71717A]">{{ g.label }}</span>
-            <span class="text-sm font-medium text-[#18181B]">{{ g.date }}</span>
+            <div>
+              <span class="text-sm text-[#71717A]">{{ g.label }}</span>
+              <span v-if="g.title" class="ml-1.5 text-xs text-[#A1A1AA]">({{ g.title }})</span>
+            </div>
+            <span class="text-sm font-medium" :class="g.date ? 'text-[#18181B]' : 'text-[#A1A1AA]'">
+              {{ g.date ?? '暂无记录' }}
+            </span>
           </div>
         </div>
       </div>
