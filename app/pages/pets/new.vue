@@ -23,6 +23,8 @@ const petForm = reactive({
 
 // 品种选项
 const breeds = [
+  {label: '拉布拉多', value: 'dog_lab' },
+  {label: '边境牧羊犬', value: 'dog_border' },
   { label: '英国短毛猫', value: 'cat_sh' },
   { label: '金毛寻回犬', value: 'dog_golden' },
   { label: '布偶猫', value: 'cat_rag' },
@@ -49,11 +51,66 @@ const handleFileChange = (event: Event) => {
   }
 }
 
-const handleSave = () => {
-  console.log('Saving pet profile:', petForm)
+// 表单校验错误
+const errors = reactive({ name: '', breed: '' })
+
+const validate = () => {
+  errors.name = petForm.name.trim() ? '' : '请填写宠物名称'
+  errors.breed = petForm.breed ? '' : '请选择品种'
+  return !errors.name && !errors.breed
 }
 
+const saving = ref(false)
+const toast = useToast()
+const petsStore = usePetsStore()
 const router = useRouter()
+
+// 从 breed 值前缀推导 species
+const getSpecies = (breed: string): 'dog' | 'cat' | 'other' => {
+  if (breed.startsWith('dog_')) return 'dog'
+  if (breed.startsWith('cat_')) return 'cat'
+  return 'other'
+}
+
+const handleSave = async () => {
+  if (!validate()) return
+  if (saving.value) return
+  saving.value = true
+  try {
+    let avatar_url: string | undefined
+
+    // 如有头像，先上传到 Storage
+    if (petForm.avatar) {
+      const [, mimeAndData] = petForm.avatar.split(',')
+      const mimeType = petForm.avatar.match(/data:([^;]+);/)?.[1] ?? 'image/jpeg'
+      const { url } = await $fetch<{ url: string }>('/api/pets/avatar', {
+        method: 'POST',
+        body: { base64: mimeAndData, mimeType },
+      })
+      avatar_url = url
+    }
+
+    const payload = {
+      name: petForm.name.trim(),
+      gender: petForm.gender === 'boy' ? 'male' : 'female',
+      species: getSpecies(petForm.breed),
+      breed: petForm.breed || undefined,
+      birthday: petForm.birthday || undefined,
+      sterilized: petForm.sterilized,
+      weight: petForm.weight ? Number(petForm.weight) : undefined,
+      home_date: petForm.homeDate || undefined,
+      avatar_url,
+    }
+
+    const pet = await $fetch('/api/pets', { method: 'POST', body: payload })
+    petsStore.upsertPet(pet as any)
+    router.push('/')
+  } catch (e: any) {
+    toast.add({ title: '保存失败', description: e?.data?.message ?? '请稍后重试', color: 'error' })
+  } finally {
+    saving.value = false
+  }
+}
 
 const handleCancel = () => {
   router.back()
@@ -74,6 +131,8 @@ const handleCancel = () => {
       <h1 class="text-xl font-semibold text-zinc-900">建立档案</h1>
       <UButton
         variant="ghost"
+        :loading="saving"
+        :disabled="saving"
         class="text-base font-bold text-[#FDBA74] hover:bg-transparent"
         @click="handleSave"
       >
@@ -121,15 +180,19 @@ const handleCancel = () => {
         <!-- 基本信息卡片 -->
         <div class="rounded-[20px] bg-white px-4 py-1 shadow-[0_4px_12px_rgba(201,183,163,0.1)]">
           <!-- 名称 -->
-          <div class="flex items-center border-b border-zinc-100 py-4">
-            <label class="w-24 text-base font-medium">宠物名称</label>
-            <UInput
-              v-model="petForm.name"
-              variant="none"
-              placeholder="比如：年糕"
-              class="flex-1 text-right"
-              input-class="text-right text-zinc-900 text-base"
-            />
+          <div class="border-b border-zinc-100">
+            <div class="flex items-center py-4">
+              <label class="w-24 text-base font-medium">宠物名称</label>
+              <UInput
+                v-model="petForm.name"
+                variant="none"
+                placeholder="比如：年糕"
+                class="flex-1 text-right"
+                input-class="text-right text-zinc-900 text-base"
+                @input="errors.name = ''"
+              />
+            </div>
+            <p v-if="errors.name" class="pb-2 text-right text-xs text-red-400">{{ errors.name }}</p>
           </div>
 
           <!-- 性别切换 -->
@@ -154,7 +217,6 @@ const handleCancel = () => {
               </button>
             </div>
           </div>
-          <!-- 是否绝育 -->
           <!-- 是否绝育 -->
           <div class="flex items-center border-b border-zinc-100 py-4">
             <label class="w-24 text-base font-medium">绝育情况</label>
@@ -192,19 +254,23 @@ const handleCancel = () => {
 
 
           <!-- 品种选择 -->
-          <div class="flex items-center py-4">
-            <label class="w-24 text-base font-medium">品种</label>
-            <div class="flex-1">
-              <USelectMenu
-                v-model="petForm.breed"
-                :options="breeds"
-                placeholder="请选择"
-                value-attribute="value"
-                variant="none"
-                class="w-full"
-                select-class="text-right text-base text-zinc-900 pr-6"
-              />
+          <div>
+            <div class="flex items-center py-4">
+              <label class="w-24 text-base font-medium">品种</label>
+              <div class="flex-1">
+                <USelect
+                  v-model="petForm.breed"
+                  :items="breeds"
+                  placeholder="请选择"
+                  value-attribute="value"
+                  variant="none"
+                  class="w-full"
+                  select-class="text-right text-base text-zinc-900 pr-6"
+                  @change="errors.breed = ''"
+                />
+              </div>
             </div>
+            <p v-if="errors.breed" class="pb-2 text-right text-xs text-red-400">{{ errors.breed }}</p>
           </div>
         </div>
 
@@ -239,6 +305,8 @@ const handleCancel = () => {
     <footer class="mt-auto p-10 flex justify-center">
       <UButton
         size="xl"
+        :loading="saving"
+        :disabled="saving"
         class="!bg-[#C9B7A3] hover:!bg-[#C9B7A3]/90 text-white px-10 h-11 rounded-full text-base font-medium shadow-none transition-all active:scale-95 flex items-center justify-center border-none"
         @click="handleSave"
       >

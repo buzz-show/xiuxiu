@@ -8,6 +8,9 @@ export interface Pet {
   gender?: 'male' | 'female' | 'unknown'
   avatar_url?: string
   notes?: string
+  sterilized?: boolean
+  weight?: number
+  home_date?: string
   created_at: string
   updated_at: string
 }

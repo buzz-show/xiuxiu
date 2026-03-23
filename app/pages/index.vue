@@ -8,6 +8,22 @@ onMounted(fetchPets)
 const selectedIndex = ref(0)
 const selectedPet = computed<Pet | undefined>(() => pets.value[selectedIndex.value])
 
+// 头像展开状态
+const showSwitcher = ref(false)
+
+// 其他宠物列表（附带原始下标）
+const otherPets = computed(() =>
+  pets.value
+    .map((p, i) => ({ ...p, originalIndex: i }))
+    .filter((_, i) => i !== selectedIndex.value)
+)
+
+// 切换宠物
+function switchPet(originalIndex: number) {
+  selectedIndex.value = originalIndex
+  showSwitcher.value = false
+}
+
 // 根据生日计算年龄
 function calcAge(birthday?: string): string {
   if (!birthday) return '--'
@@ -21,14 +37,22 @@ function calcAge(birthday?: string): string {
   return rem > 0 ? `${years} 岁 ${rem} 个月` : `${years} 岁`
 }
 
-// 打招呼文案
+// 打招呼文案：根据当前时间段返回不同的问候语+user?.email的用户名部分（@前面）
+const authStore = useAuthStore()
+
 const greeting = computed(() => {
   const h = new Date().getHours()
-  if (h < 6)  return '夜深了'
-  if (h < 11) return '早上好'
-  if (h < 14) return '中午好'
-  if (h < 18) return '下午好'
-  return '晚上好'
+  let greet = ''
+  if (h < 6)       greet = '夜深了'
+  else if (h < 11) greet = '早上好'
+  else if (h < 14) greet = '中午好'
+  else if (h < 18) greet = '下午好'
+  else              greet = '晚上好'
+
+  const username = authStore?.user?.email?.split('@')[0]
+  console.log('greeting computed:', authStore)
+  console.log('greeting computed1:', username)
+  return username ? `${greet}，${username}` : greet
 })
 
 // 物种展示文字
@@ -79,9 +103,9 @@ const groomings = ref([
     <!-- ===== 空状态 ===== -->
     <div v-if="!loading && !pets.length" class="flex flex-col items-center justify-center py-24 space-y-4">
       <div class="w-24 h-24 rounded-full mx-auto mb-6 transition-transform hover:scale-110 duration-500">
-        <img 
-          src="/images/dog-nose-logo.png" 
-          alt="嗅嗅 Logo" 
+        <img
+          src="/images/dog-nose-logo.png"
+          alt="嗅嗅 Logo"
           class="w-full h-full object-contain animate-[bounce_4s_infinite] mix-blend-multiply"
         >
       </div>
@@ -116,61 +140,93 @@ const groomings = ref([
         </NuxtLink>
       </div>
 
-      <!-- ── 宠物切换器（头像圆圈行）── -->
-      <div class="flex items-center gap-3 overflow-x-auto py-1 no-scrollbar">
-        <button
-          v-for="(pet, i) in pets"
-          :key="pet.id"
-          class="flex flex-col items-center gap-1 flex-shrink-0 transition-opacity"
-          :class="selectedIndex === i ? 'opacity-100' : 'opacity-40'"
-          @click="selectedIndex = i"
-        >
-          <div
-            class="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center text-2xl transition-all"
-            :class="selectedIndex === i
-              ? 'ring-2 ring-offset-2 ring-[#C9B7A3]'
-              : 'ring-1 ring-[#E4E4E7]'"
-            style="background-color: var(--warm-light)"
-          >
-            <img v-if="pet.avatar_url" :src="pet.avatar_url" class="w-full h-full object-cover" />
-            <span v-else>{{ speciesEmoji(pet.species) }}</span>
-          </div>
-          <span class="text-xs font-medium text-[#3F3F46] max-w-[56px] truncate">{{ pet.name }}</span>
-        </button>
-      </div>
-
-      <!-- ── 宠物主卡片 ── -->
-      <NuxtLink
-        :to="`/pets/${selectedPet?.id}`"
-        class="block rounded-3xl p-5 shadow-sm active:scale-[0.98] transition-transform"
+      <!-- ── 宠物主卡片（含头像内联切换）── -->
+      <div
+        class="rounded-3xl p-5 shadow-sm overflow-hidden"
         style="background-color: var(--warm-light)"
       >
-        <div class="flex items-center gap-4">
-          <!-- 头像 -->
-          <div
-            class="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center text-3xl flex-shrink-0"
-            style="background-color: var(--warm-primary)"
-          >
-            <img v-if="selectedPet?.avatar_url" :src="selectedPet.avatar_url" class="w-full h-full object-cover" />
-            <span v-else>{{ speciesEmoji(selectedPet?.species) }}</span>
-          </div>
-          <!-- 信息 -->
-          <div class="flex-1 min-w-0">
-            <p class="text-lg font-bold text-[#18181B] truncate">{{ selectedPet?.name }}</p>
-            <p class="text-sm text-[#71717A]">
-              {{ selectedPet?.breed || speciesLabel(selectedPet?.species) }}
-            </p>
-            <div class="flex items-center gap-3 mt-1">
-              <span v-if="selectedPet?.gender" class="text-xs text-[#A1A1AA]">
-                {{ selectedPet.gender === 'male' ? '♂ 男生' : selectedPet.gender === 'female' ? '♀ 女生' : '' }}
+        <div class="flex items-center gap-3">
+
+          <!-- ── 头像区域：当前头像 + 展开的候选头像 ── -->
+          <div class="flex items-center gap-2 flex-shrink-0">
+
+            <!-- 当前宠物头像（可点击展开/收起） -->
+            <button
+              class="relative flex-shrink-0 transition-transform duration-200 active:scale-90"
+              :class="pets.length > 1 ? 'cursor-pointer' : 'cursor-default'"
+              @click="pets.length > 1 && (showSwitcher = !showSwitcher)"
+            >
+              <div
+                class="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center text-3xl ring-2 ring-offset-2 ring-[#C9B7A3]"
+                style="background-color: var(--warm-primary)"
+              >
+                <img v-if="selectedPet?.avatar_url" :src="selectedPet.avatar_url" class="w-full h-full object-cover" />
+                <span v-else>{{ speciesEmoji(selectedPet?.species) }}</span>
+              </div>
+              <!-- 多宠物时：右下角切换角标 -->
+              <span
+                v-if="pets.length > 1"
+                class="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border border-white transition-transform duration-200"
+                :style="showSwitcher
+                  ? 'background-color: var(--warm-deep); color: white;'
+                  : 'background-color: white; color: #C9B7A3;'"
+              >
+                {{ showSwitcher ? '✕' : '⇄' }}
               </span>
-              <span class="text-xs text-[#A1A1AA]">{{ calcAge(selectedPet?.birthday) }}</span>
+            </button>
+
+            <!-- 候选宠物头像行（展开/收起动效） -->
+            <div
+              class="flex items-center gap-2 overflow-hidden transition-all duration-300 ease-out"
+              :style="{
+                maxWidth: showSwitcher ? `${otherPets.length * 52}px` : '0px',
+                opacity: showSwitcher ? '1' : '0',
+              }"
+            >
+              <button
+                v-for="pet in otherPets"
+                :key="pet.id"
+                class="flex-shrink-0 transition-transform duration-150 active:scale-90"
+                @click="switchPet(pet.originalIndex)"
+              >
+                <div
+                  class="w-11 h-11 rounded-full overflow-hidden flex items-center justify-center text-xl ring-1 ring-[#E4E4E7] hover:ring-2 hover:ring-[#C9B7A3] transition-all duration-150"
+                  style="background-color: #F4F4F5"
+                >
+                  <img v-if="pet.avatar_url" :src="pet.avatar_url" class="w-full h-full object-cover" />
+                  <span v-else>{{ speciesEmoji(pet.species) }}</span>
+                </div>
+              </button>
             </div>
           </div>
-          <!-- 箭头 -->
-          <UIcon name="i-heroicons-chevron-right" class="text-[#C9B7A3] text-xl flex-shrink-0" />
+
+          <!-- ── 宠物信息区（点击跳转详情）── -->
+          <NuxtLink
+            :to="`/pets/${selectedPet?.id}`"
+            class="flex items-center gap-2 flex-1 min-w-0 overflow-hidden transition-all duration-300 ease-out active:opacity-70"
+            :style="{
+              maxWidth: showSwitcher ? '0px' : '999px',
+              opacity: showSwitcher ? '0' : '1',
+            }"
+          >
+            <div class="flex-1 min-w-0">
+              <p class="text-lg font-bold text-[#18181B] truncate">{{ selectedPet?.name }}</p>
+              <p class="text-sm text-[#71717A] truncate">
+                {{ selectedPet?.breed || speciesLabel(selectedPet?.species) }}
+              </p>
+              <div class="flex items-center gap-3 mt-1">
+                <span v-if="selectedPet?.gender" class="text-xs text-[#A1A1AA]">
+                  {{ selectedPet.gender === 'male' ? '♂ 男生' : selectedPet.gender === 'female' ? '♀ 女生' : '' }}
+                </span>
+                <span class="text-xs text-[#A1A1AA]">{{ calcAge(selectedPet?.birthday) }}</span>
+              </div>
+            </div>
+            <!-- 箭头 -->
+            <UIcon name="i-heroicons-chevron-right" class="text-[#C9B7A3] text-xl flex-shrink-0" />
+          </NuxtLink>
+
         </div>
-      </NuxtLink>
+      </div>
 
       <!-- ── AI 今日建议卡片 ── -->
       <NuxtLink
