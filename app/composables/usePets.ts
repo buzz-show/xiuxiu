@@ -50,5 +50,17 @@ export function usePets() {
     }
   }
 
-  return { pets, loading, error, fetchPets, getPet, createPet, updatePet }
+  async function deletePet(id: string) {
+    error.value = null
+    try {
+      await $fetch(`/api/pets/${id}`, { method: 'DELETE' })
+      pets.value = pets.value.filter(p => p.id !== id)
+    } catch (e: any) {
+      if (e?.statusCode === 401) return navigateTo('/auth/login')
+      error.value = e?.data?.message ?? '删除宠物失败'
+      throw e
+    }
+  }
+
+  return { pets, loading, error, fetchPets, getPet, createPet, updatePet, deletePet }
 }
