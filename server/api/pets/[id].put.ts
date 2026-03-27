@@ -6,12 +6,12 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   const body = await readBody(event)
   // 只允许更新安全字段，防止越权修改 user_id
-  const { name, species, breed, birthday, gender, avatar_url, notes } = body
+  const { name, species, breed, birthday, gender, avatar_url, notes, home_date, sterilized, weight } = body
 
   const supabase = createServerSupabaseClient()
   const { data, error } = await supabase
     .from('pets')
-    .update({ name, species, breed, birthday, gender, avatar_url, notes, updated_at: new Date().toISOString() })
+    .update({ name, species, breed, birthday, gender, avatar_url, notes, home_date, sterilized, weight, updated_at: new Date().toISOString() })
     .eq('id', id)
     .eq('user_id', user.sub)
     .select()
