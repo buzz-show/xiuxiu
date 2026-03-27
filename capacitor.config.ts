@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.xiuxiu.petassistant',
-  appName: '秀秀宠物助理',
+  appName: '嗅嗅宠物助理',
   webDir: '.output/public',
   server: {
     androidScheme: 'https',

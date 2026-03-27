@@ -18,9 +18,11 @@ export function useChat() {
       id: crypto.randomUUID(),
       role: 'assistant',
       content: '',
+      streaming: true,
       created_at: new Date().toISOString(),
     }
     messages.value.push(assistantMsg)
+    const assistantIdx = messages.value.length - 1
 
     try {
       const res = await fetch('/api/chat', {
@@ -39,14 +41,25 @@ export function useChat() {
         for (const line of lines) {
           const data = JSON.parse(line.slice(6))
           if (data.type === 'delta') {
-            assistantMsg.content += data.content
-            messages.value = [...messages.value]
+            messages.value[assistantIdx]! = {
+              ...messages.value[assistantIdx]!,
+              content: messages.value[assistantIdx]!.content + data.content,
+            } as Message
+          } else if (data.type === 'done') {
+            messages.value[assistantIdx]! = { ...messages.value[assistantIdx]!, streaming: false } as Message
           }
         }
       }
     } catch {
-      assistantMsg.content = '抱歉，出了点问题，请稍后再试。'
+      messages.value[assistantIdx]! = {
+        ...messages.value[assistantIdx]!,
+        content: messages.value[assistantIdx]!.content || '抱歉，出了点问题，请稍后再试。',
+        streaming: false,
+      } as Message
     } finally {
+      if (messages.value[assistantIdx]!?.streaming) {
+        messages.value[assistantIdx]! = { ...messages.value[assistantIdx]!, streaming: false } as Message
+      }
       sending.value = false
     }
   }

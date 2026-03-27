@@ -5,6 +5,7 @@ export interface Message {
   role: MessageRole
   content: string
   created_at: string
+  streaming?: boolean
   // tool call 相关（assistant 调用工具时）
   tool_calls?: ToolCall[]
 }

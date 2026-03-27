@@ -1,6 +1,7 @@
 import { HumanMessage } from '@langchain/core/messages'
 import { buildPetAssistantGraph } from '../utils/agent/graph'
 import { setSSEHeaders, formatSSE } from '../utils/stream'
+import { serverSupabaseUser } from '#supabase/server'
 
 export default defineEventHandler(async (event) => {
   // 1. 鉴权：从 Supabase Auth 获取当前用户

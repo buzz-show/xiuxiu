@@ -9,7 +9,10 @@ export function createLLM() {
   // 通过修改 baseURL 和 apiKey 可切换到通义千问兼容接口
   return new ChatOpenAI({
     apiKey: config.openaiApiKey,
-    modelName: 'gpt-4o-mini',
+    modelName: 'qwen3.5-flash',
+    configuration: {
+      baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+    },
     temperature: 0.7,
     streaming: true,
   })

@@ -2,6 +2,9 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  devServer: {
+    port: 4396  // 改为你想要的端口
+  },
 
   // SPA 模式，兼容 Capacitor WebView
   ssr: false,
