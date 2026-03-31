@@ -67,12 +67,12 @@ onMounted(async () => {
       class="bg-white/90 backdrop-blur-sm border-b border-[#F0EBE5] flex items-center px-4 gap-3"
       style="padding-top: max(env(safe-area-inset-top, 0px), 44px); padding-bottom: 12px"
     >
-      <!-- 历史记录按钮 -->
+      <!-- 返回按钮 -->
       <button
         class="p-2 rounded-xl text-[#8B7E74] hover:bg-[#F3F1ED] active:bg-[#EAE5E0] transition-colors"
-        @click="drawerOpen = true"
+        @click="$router.back()"
       >
-        <UIcon name="i-heroicons-clock" class="w-5 h-5" />
+        <UIcon name="i-heroicons-chevron-left" class="w-5 h-5" />
       </button>
 
       <!-- 标题 -->
@@ -80,12 +80,12 @@ onMounted(async () => {
         <p class="text-[16px] font-semibold text-[#333333]">嗅嗅助理</p>
       </div>
 
-      <!-- 新建对话按钮 -->
+      <!-- 历史记录按钮 -->
       <button
         class="p-2 rounded-xl text-[#8B7E74] hover:bg-[#F3F1ED] active:bg-[#EAE5E0] transition-colors"
-        @click="handleNewSession"
+        @click="drawerOpen = true"
       >
-        <UIcon name="i-heroicons-pencil-square" class="w-5 h-5" />
+        <UIcon name="i-heroicons-clock" class="w-5 h-5" />
       </button>
     </header>
 

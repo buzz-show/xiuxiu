@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
     .from('chat_sessions')
     .delete()
     .eq('id', sessionId)
-    .eq('user_id', user.id)
+    .eq('user_id', user.sub)
 
   if (error) {
     throw createError({ statusCode: 500, message: error.message })

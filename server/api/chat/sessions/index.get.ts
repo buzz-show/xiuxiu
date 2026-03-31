@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   const { data, error } = await client
     .from('chat_sessions')
     .select('id, title, created_at, updated_at')
-    .eq('user_id', user.id)
+    .eq('user_id', user.sub)
     .order('updated_at', { ascending: false })
 
   if (error) {

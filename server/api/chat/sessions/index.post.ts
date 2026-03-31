@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const { data, error } = await client
     .from('chat_sessions')
     .insert({
-      user_id: user.id,
+      user_id: user.sub,
       title: body?.title?.trim() || '新对话',
     })
     .select('id, title, created_at, updated_at')
