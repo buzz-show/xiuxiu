@@ -7,7 +7,12 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:api": "vitest run tests/api",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@capacitor/camera": "^8.0.2",
@@ -15,6 +20,7 @@
     "@capacitor/local-notifications": "^8.0.2",
     "@langchain/core": "^1.1.32",
     "@langchain/langgraph": "^1.2.2",
+    "@langchain/langgraph-checkpoint-postgres": "^1.0.1",
     "@langchain/openai": "^1.2.13",
     "@nuxt/ui": "^4.5.1",
     "@nuxtjs/supabase": "^2.0.4",
@@ -26,5 +32,10 @@
     "vue": "^3.5.30",
     "vue-router": "^5.0.3",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.2",
+    "happy-dom": "^20.8.9",
+    "vitest": "^4.1.2"
   }
 }

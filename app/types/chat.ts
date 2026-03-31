@@ -1,24 +1,18 @@
-export type MessageRole = 'user' | 'assistant' | 'tool'
-
-export interface Message {
+export interface ChatMessage {
   id: string
-  role: MessageRole
+  role: 'user' | 'assistant'
   content: string
-  created_at: string
-  streaming?: boolean
-  // tool call 相关（assistant 调用工具时）
-  tool_calls?: ToolCall[]
+  created_at?: string
 }
 
-export interface ToolCall {
-  id: string
-  name: string
-  args: Record<string, unknown>
-  result?: string
+// 前端展示用（含流式状态字段）
+export interface Message extends ChatMessage {
+  streaming?: boolean
 }
 
 export interface ChatSession {
-  thread_id: string
-  pet_id?: string
-  messages: Message[]
+  id: string
+  title: string
+  created_at: string
+  updated_at: string
 }

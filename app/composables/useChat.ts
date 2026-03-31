@@ -1,68 +1,93 @@
 import type { Message } from '~/types/chat'
 
-export function useChat() {
+export function useChat(sessionId: Ref<string | null>) {
   const messages = ref<Message[]>([])
   const sending = ref(false)
-  const threadId = ref(crypto.randomUUID())
+  const loadingHistory = ref(false)
+
+  async function loadHistory() {
+    const id = sessionId.value
+    if (!id) return
+    loadingHistory.value = true
+    try {
+      const data = await $fetch<Message[]>(`/api/chat/sessions/${id}/messages`)
+      messages.value = data
+    } finally {
+      loadingHistory.value = false
+    }
+  }
 
   async function sendMessage(text: string) {
+    if (!text.trim() || sending.value || !sessionId.value) return
+
+    // 1. 插入用户消息（乐观更新）
     messages.value.push({
       id: crypto.randomUUID(),
       role: 'user',
-      content: text,
-      created_at: new Date().toISOString(),
+      content: text.trim(),
     })
-    sending.value = true
 
-    const assistantMsg: Message = {
-      id: crypto.randomUUID(),
+    // 2. 插入空的 assistant 消息占位（loading 状态）
+    const assistantId = crypto.randomUUID()
+    messages.value.push({
+      id: assistantId,
       role: 'assistant',
       content: '',
       streaming: true,
-      created_at: new Date().toISOString(),
-    }
-    messages.value.push(assistantMsg)
-    const assistantIdx = messages.value.length - 1
+    })
+
+    sending.value = true
 
     try {
-      const res = await fetch('/api/chat', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, thread_id: threadId.value }),
+        body: JSON.stringify({ message: text.trim(), session_id: sessionId.value }),
       })
-      if (!res.body) throw new Error('No stream')
 
-      const reader = res.body.getReader()
+      if (!response.ok || !response.body) {
+        throw new Error(`HTTP error ${response.status}`)
+      }
+
+      const reader = response.body.getReader()
       const decoder = new TextDecoder()
+      let buffer = ''
+
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
-        const lines = decoder.decode(value).split('\n').filter(l => l.startsWith('data: '))
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+
         for (const line of lines) {
-          const data = JSON.parse(line.slice(6))
-          if (data.type === 'delta') {
-            messages.value[assistantIdx]! = {
-              ...messages.value[assistantIdx]!,
-              content: messages.value[assistantIdx]!.content + data.content,
-            } as Message
-          } else if (data.type === 'done') {
-            messages.value[assistantIdx]! = { ...messages.value[assistantIdx]!, streaming: false } as Message
+          if (!line.startsWith('data: ')) continue
+          const json = line.slice(6).trim()
+          if (!json) continue
+
+          try {
+            const parsed = JSON.parse(json) as { type: string; content?: string }
+            if (parsed.type === 'delta' && parsed.content) {
+              const msg = messages.value.find(m => m.id === assistantId)
+              if (msg) msg.content += parsed.content
+            }
+            if (parsed.type === 'done') break
+          } catch {
+            // ignore malformed lines
           }
         }
       }
     } catch {
-      messages.value[assistantIdx]! = {
-        ...messages.value[assistantIdx]!,
-        content: messages.value[assistantIdx]!.content || '抱歉，出了点问题，请稍后再试。',
-        streaming: false,
-      } as Message
+      const msg = messages.value.find(m => m.id === assistantId)
+      if (msg) msg.content = '抱歉，出了点问题，请稍后再试。'
     } finally {
-      if (messages.value[assistantIdx]!?.streaming) {
-        messages.value[assistantIdx]! = { ...messages.value[assistantIdx]!, streaming: false } as Message
-      }
+      // 流式结束，取消 streaming 标志
+      const msg = messages.value.find(m => m.id === assistantId)
+      if (msg) msg.streaming = false
       sending.value = false
     }
   }
 
-  return { messages, sending, sendMessage, threadId }
+  return { messages, sending, loadingHistory, loadHistory, sendMessage }
 }

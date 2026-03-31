@@ -1,9 +1,22 @@
 import { StateGraph } from '@langchain/langgraph'
 import { ToolNode } from "@langchain/langgraph/prebuilt"
 import { AIMessage } from '@langchain/core/messages'
+import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres'
 import { AgentState } from './state'
 import { createAgentTools } from './tools'
 import { createLLM } from '../llm'
+
+// 单例 checkpointer，复用数据库连接池
+let _checkpointer: PostgresSaver | null = null
+async function getCheckpointer(): Promise<PostgresSaver> {
+  if (!_checkpointer) {
+    const dbUrl = process.env.DATABASE_URL
+    if (!dbUrl) throw new Error('DATABASE_URL is not set')
+    _checkpointer = PostgresSaver.fromConnString(dbUrl)
+    await _checkpointer.setup()
+  }
+  return _checkpointer
+}
 
 const SYSTEM_PROMPT = `你是"嗅嗅宠物助理"，一个专业、温暖的AI宠物健康顾问。
 
@@ -26,7 +39,7 @@ const SYSTEM_PROMPT = `你是"嗅嗅宠物助理"，一个专业、温暖的AI�
  * 构建并编译 LangGraph Agent
  * @param userId 当前登录用户 ID，用于 Tool 权限校验
  */
-export function buildPetAssistantGraph(userId: string) {
+export async function buildPetAssistantGraph(userId: string) {
   const tools = createAgentTools(userId)
   const llm = createLLM()
   const llmWithTools = llm.bindTools(tools)
@@ -55,5 +68,6 @@ export function buildPetAssistantGraph(userId: string) {
     .addConditionalEdges('agent', shouldContinue)
     .addEdge('tools', 'agent')
 
-  return graph.compile()
+  const checkpointer = await getCheckpointer()
+  return graph.compile({ checkpointer })
 }
