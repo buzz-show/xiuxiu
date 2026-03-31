@@ -39,6 +39,7 @@ async function handleDeleteSession(id: string) {
 }
 
 async function onSend() {
+  console.log('发送消息:当前会话id', input.value, currentSessionId.value)
   if (!input.value.trim()) return
   // 若还没有会话，先创建一个
   if (!currentSessionId.value) {

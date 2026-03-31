@@ -1,4 +1,5 @@
 import { HumanMessage } from '@langchain/core/messages'
+import { serverSupabaseUser, serverSupabaseClient } from '#supabase/server'
 import { buildPetAssistantGraph } from '../utils/agent/graph'
 import { setSSEHeaders, formatSSE } from '../utils/stream'
 
@@ -20,12 +21,12 @@ export default defineEventHandler(async (event) => {
 
   const client = await serverSupabaseClient(event)
 
-  // 3. 验证 session 归属当前用户
+  // 3. 验证 session 归属当前用户（使用 user.sub，与其他接口保持一致）
   const { data: session, error: sessionError } = await client
     .from('chat_sessions')
     .select('id')
     .eq('id', body.session_id)
-    .eq('user_id', user.id)
+    .eq('user_id', user.sub)
     .single()
 
   if (sessionError || !session) {
@@ -35,7 +36,7 @@ export default defineEventHandler(async (event) => {
   // 4. 持久化用户消息
   await client.from('chat_messages').insert({
     session_id: body.session_id,
-    user_id: user.id,
+    user_id: user.sub,
     role: 'user',
     content: body.message.trim(),
   })
@@ -44,13 +45,13 @@ export default defineEventHandler(async (event) => {
   setSSEHeaders(event)
 
   // 6. 构建 Agent 并流式调用（session_id 直接作为 LangGraph thread_id）
-  const graph = await buildPetAssistantGraph(user.id)
+  const graph = await buildPetAssistantGraph(user.sub)
   const config = { configurable: { thread_id: body.session_id } }
 
   const stream = await graph.stream(
     {
       messages: [new HumanMessage(body.message)],
-      userId: user.id,
+      userId: user.sub,
       petId: body.pet_id,
     },
     { ...config, streamMode: 'messages' },
@@ -78,7 +79,7 @@ export default defineEventHandler(async (event) => {
           await Promise.all([
             client.from('chat_messages').insert({
               session_id: body.session_id,
-              user_id: user.id,
+              user_id: user.sub,
               role: 'assistant',
               content: assistantContent,
             }),
