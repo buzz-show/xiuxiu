@@ -21,7 +21,8 @@ watch(
     <!-- 空状态 -->
     <template v-if="messages.length === 0">
       <!-- 欢迎卡片 -->
-      <div class="bg-white rounded-[24px] p-5 shadow-sm border border-[#EFE9E1] relative overflow-hidden group">
+      <!-- TODO: 用定时任务产生的只能分析作为欢迎语 -->
+      <!-- <div class="bg-white rounded-[24px] p-5 shadow-sm border border-[#EFE9E1] relative overflow-hidden group">
         <div class="flex items-start gap-4">
           <div class="shrink-0 bg-[#FFF4E5] p-3 rounded-2xl">
             <UIcon name="i-heroicons-sparkles-20-solid" class="w-6 h-6 text-[#FF9F43]" />
@@ -39,7 +40,7 @@ watch(
         <div class="absolute -right-4 -bottom-4 opacity-5 rotate-12 transition-transform group-hover:scale-110 pointer-events-none select-none text-[80px] leading-none">
           🐾
         </div>
-      </div>
+      </div> -->
 
       <!-- 空状态提示 -->
       <div class="flex flex-col items-center justify-center py-10 opacity-40">

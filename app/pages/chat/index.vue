@@ -18,7 +18,8 @@ async function selectSession(id: string) {
 
 // 新建会话
 async function handleNewSession() {
-  const session = await createSession()
+  const title = `会话 ${new Date().toLocaleTimeString()}`
+  const session = await createSession(title)
   await selectSession(session.id)
   drawerOpen.value = false
 }
@@ -41,9 +42,9 @@ async function handleDeleteSession(id: string) {
 async function onSend() {
   console.log('发送消息:当前会话id', input.value, currentSessionId.value)
   if (!input.value.trim()) return
-  // 若还没有会话，先创建一个
+  // 若还没有会话，先创建一个，用消息的前几字作为会话标题
   if (!currentSessionId.value) {
-    const session = await createSession()
+    const session = await createSession(input.value.trim().slice(0, 20))
     currentSessionId.value = session.id
   }
   const text = input.value
