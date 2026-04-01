@@ -33,3 +33,9 @@ Cookie: {{token}}
 # 删除会话
 DELETE {{baseUrl}}/api/chat/sessions/{{sessionId}}
 Cookie: {{token}}
+
+###
+# 发送消息
+POST {{baseUrl}}/api/chat/sessions/{{sessionId}}/messages
+Cookie: {{token}}
+Content-Type: application/json

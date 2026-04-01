@@ -1,3 +1,4 @@
+import { serverSupabaseUser, serverSupabaseClient } from '#supabase/server'
 // GET /api/chat/sessions/[id]/messages - 获取指定会话的历史消息
 export default defineEventHandler(async (event) => {
   const user = await serverSupabaseUser(event)
@@ -17,7 +18,7 @@ export default defineEventHandler(async (event) => {
     .from('chat_sessions')
     .select('id')
     .eq('id', sessionId)
-    .eq('user_id', user.id)
+    .eq('user_id', user.sub)
     .single()
 
   if (sessionError || !session) {
